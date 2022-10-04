@@ -1,18 +1,29 @@
 import { Injectable } from '@nestjs/common';
 
-import { createPage, signIn } from './scrapper.utils';
+import { createPage, searchProduct, signIn } from './scrapper.utils';
 
 @Injectable()
 export class ScrapperService {
-  async test() {
+  async searchProducts({ products }) {
     const { page, browser } = await createPage({
       url: 'https://domicilios.tiendasd1.com',
     });
 
     await signIn({ page });
 
-    setTimeout(async () => {
-      await browser.close();
-    }, 35000);
+    const productsFound = [];
+
+    for await (const product of products) {
+      const found = await searchProduct({ product, page });
+      if (found) {
+        productsFound.push(found);
+      }
+    }
+    // setTimeout(async () => {
+    //   await browser.close();
+    // }, 35000);
+    await browser.close();
+
+    return [];
   }
 }
