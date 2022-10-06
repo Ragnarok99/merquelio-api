@@ -33,10 +33,11 @@ export class ShoppingCartService {
     if (!cart) {
       throw new NotFoundException('cart not found');
     }
-    const test = await this.scrapperService.searchProducts({
+    const productsFound = await this.scrapperService.searchProducts({
       products: cart.products,
     });
-    return { test };
+
+    return productsFound;
   }
 
   async findAll() {

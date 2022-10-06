@@ -19,11 +19,9 @@ export class ScrapperService {
         productsFound.push(found);
       }
     }
-    // setTimeout(async () => {
-    //   await browser.close();
-    // }, 35000);
+
     await browser.close();
 
-    return [];
+    return productsFound;
   }
 }

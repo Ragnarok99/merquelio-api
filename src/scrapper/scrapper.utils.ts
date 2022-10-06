@@ -1,5 +1,5 @@
 import { Logger } from '@nestjs/common';
-import { Page, chromium, LaunchOptions } from 'playwright';
+import { Page, chromium, LaunchOptions, Locator } from 'playwright';
 
 interface SignInParams {
   page: Page;
@@ -31,6 +31,12 @@ export const createPage = async ({ options = {}, url }: CreatePageParams) => {
   }
 };
 
+async function* iterateLocator(locator: Locator): AsyncGenerator<Locator> {
+  for (let index = 0; index < (await locator.count()); index++) {
+    yield locator.nth(index);
+  }
+}
+
 export const searchProduct = async ({ product, page }: SearchProductParams) => {
   try {
     await page.locator('.searchInput__container input').fill(product.name);
@@ -38,29 +44,49 @@ export const searchProduct = async ({ product, page }: SearchProductParams) => {
       .locator('.ant-btn.ant-btn-primary.ant-input-search-button')
       .click();
 
-    const currentPageProducts = page.locator(
-      '//span[@data-testid[contains(.,"product-card")]]',
-    );
+    let highest = Infinity;
+    let lowestPriceElement: Locator = null;
 
-    const count = await currentPageProducts.count();
-    for (let i = 0; i < count; ++i) {
-      const t = await currentPageProducts
-        .nth(i)
-        .locator('p', {
-          has: currentPageProducts
-            .nth(i)
-            .locator('.prod--default__price__current'),
-        })
+    await page.waitForSelector('.card-product-vertical');
+
+    for await (const element of iterateLocator(
+      page.locator('.card-product-vertical'),
+    )) {
+      const elementPrice = await element
+        .locator('.prod--default__price__current')
         .textContent();
 
-      return t;
+      const price = Number(elementPrice.split(' ')[1]);
+      console.log({ price, highest });
+      if (price < highest) {
+        highest = price;
+        lowestPriceElement = element;
+      }
     }
-    return {};
+
+    if (lowestPriceElement) {
+      const name = await lowestPriceElement
+        .locator('.prod__name')
+        .textContent();
+      const image = await lowestPriceElement
+        .locator('.prod__image__img')
+        .getAttribute('src');
+      const price = await lowestPriceElement
+        .locator('.prod--default__price__current')
+        .textContent();
+
+      return {
+        name,
+        image,
+        price,
+      };
+    }
+
+    return null;
   } catch (error) {
     Logger.warn(`product ${product.name} not found`, {
       message: error.message,
     });
-    return;
   }
 };
 
