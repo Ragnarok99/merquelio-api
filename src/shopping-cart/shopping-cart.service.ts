@@ -1,9 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { ScrapperService } from 'src/scrapper/scrapper.service';
-import { PrismaService } from '../prisma/prisma.service';
+import { v4 } from 'uuid';
 
+import { ScrapperService } from '../scrapper/scrapper.service';
+import { PrismaService } from '../prisma/prisma.service';
 import { CreateShoppingCartDto } from './dto/create-shopping-cart.dto';
 import { UpdateShoppingCartDto } from './dto/update-shopping-cart.dto';
+import { Product } from './types';
 
 @Injectable()
 export class ShoppingCartService {
@@ -15,7 +17,12 @@ export class ShoppingCartService {
     private readonly scrapperService: ScrapperService,
   ) {}
   async create(createShoppingCartDto: CreateShoppingCartDto) {
-    const products = createShoppingCartDto?.products;
+    const products = createShoppingCartDto?.products?.map(
+      (product: Product) => ({
+        ...product,
+        id: v4(),
+      }),
+    );
     const cart = await this.prisma.shoppingCart.create({
       data: {
         ...createShoppingCartDto,
@@ -45,8 +52,10 @@ export class ShoppingCartService {
     return products;
   }
 
-  findOne(id: string) {
-    return `This action returns a #${id} shoppingCart`;
+  async findOne(id: string) {
+    const cart = await this.prisma.shoppingCart.findUnique({ where: { id } });
+
+    return cart;
   }
 
   async update(id: string, updateShoppingCartDto: UpdateShoppingCartDto) {
@@ -57,11 +66,21 @@ export class ShoppingCartService {
       throw new NotFoundException('Cart not found');
     }
 
+    const products = updateShoppingCartDto?.products?.map(
+      (product: Product) => {
+        if (product?.id) {
+          return product;
+        }
+
+        return { ...product, id: v4() };
+      },
+    );
+
     return await this.prisma.shoppingCart.updateMany({
       where: { id },
       data: {
         ...updateShoppingCartDto,
-        products: [...updateShoppingCartDto.products, ...currentCart?.products],
+        products: products as Partial<UpdateShoppingCartDto>,
       },
     });
   }

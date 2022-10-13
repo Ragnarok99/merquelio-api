@@ -57,7 +57,6 @@ export const searchProduct = async ({ product, page }: SearchProductParams) => {
         .textContent();
 
       const price = Number(elementPrice.split(' ')[1]);
-      console.log({ price, highest });
       if (price < highest) {
         highest = price;
         lowestPriceElement = element;
