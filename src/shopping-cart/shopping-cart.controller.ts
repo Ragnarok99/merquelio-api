@@ -20,6 +20,11 @@ export class ShoppingCartController {
     return this.shoppingCartService.create(createShoppingCartDto);
   }
 
+  @Post(':id/order')
+  orderCart(@Param('id') id: string) {
+    return this.shoppingCartService.orderCart(id);
+  }
+
   @Get(':id/search')
   search(@Param('id') id: string) {
     return this.shoppingCartService.search(id);

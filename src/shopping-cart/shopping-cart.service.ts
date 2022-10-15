@@ -46,6 +46,21 @@ export class ShoppingCartService {
 
     return productsFound;
   }
+  async orderCart(id: string) {
+    const cart = await this.prisma.shoppingCart.findUnique({
+      where: { id },
+    });
+
+    if (!cart) {
+      throw new NotFoundException('cart not found');
+    }
+
+    const test = await this.scrapperService.orderCart({
+      products: cart.products,
+    });
+
+    return true;
+  }
 
   async findAll() {
     const products = await this.prisma.shoppingCart.findMany();

@@ -10,18 +10,16 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// model Product {
-//   id         String   @id @default(cuid())
-//   name       String
-//   quantity   Int      @default(0)
-//   created_at DateTime @default(now())
-//   updated_at DateTime @updatedAt
+model Order {
+  id    String @id @default(cuid())
+  total Float  @default(0)
 
-//   shoppingCartId String
-//   shoppingCart   ShoppingCart @relation(fields: [shoppingCartId], references: [id])
-
-//   @@map("products")
-// }
+  cartId       String
+  shoppingCart ShoppingCart @relation(fields: [cartId], references: [id])
+  status       Statuses
+  created_at   DateTime     @default(now())
+  updated_at   DateTime     @updatedAt
+}
 
 model ShoppingCart {
   id         String   @id @default(cuid())
@@ -29,4 +27,11 @@ model ShoppingCart {
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
   products   Json[]   @default([])
+  Orders     Order[]
+}
+
+enum Statuses {
+  aborted
+  pending
+  completed
 }

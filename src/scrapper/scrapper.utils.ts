@@ -12,16 +12,22 @@ interface CreatePageParams {
 
 interface Product {
   name: string;
+  quantity: number;
 }
 
 interface SearchProductParams {
   product: Product;
   page: Page;
+  addIt?: boolean;
 }
 
 export const createPage = async ({ options = {}, url }: CreatePageParams) => {
   try {
-    const browser = await chromium.launch({ headless: false, ...options });
+    const browser = await chromium.launch({
+      headless: false,
+      slowMo: 2000,
+      ...options,
+    });
     const page = await browser.newPage();
     await page.goto(url);
 
@@ -37,7 +43,11 @@ async function* iterateLocator(locator: Locator): AsyncGenerator<Locator> {
   }
 }
 
-export const searchProduct = async ({ product, page }: SearchProductParams) => {
+export const searchProduct = async ({
+  product,
+  page,
+  addIt = false,
+}: SearchProductParams) => {
   try {
     await page.locator('.searchInput__container input').fill(product.name);
     await page
@@ -46,6 +56,8 @@ export const searchProduct = async ({ product, page }: SearchProductParams) => {
 
     let highest = Infinity;
     let lowestPriceElement: Locator = null;
+
+    // account for empty repsonse
 
     await page.waitForSelector('.card-product-vertical');
 
@@ -74,6 +86,14 @@ export const searchProduct = async ({ product, page }: SearchProductParams) => {
         .locator('.prod--default__price__current')
         .textContent();
 
+      if (addIt) {
+        await addProductToCart({
+          currentProduct: lowestPriceElement,
+          page,
+          product,
+        });
+      }
+
       return {
         name,
         image,
@@ -87,6 +107,25 @@ export const searchProduct = async ({ product, page }: SearchProductParams) => {
       message: error.message,
     });
   }
+};
+
+const addProductToCart = async ({
+  page,
+  product,
+  currentProduct,
+}: {
+  page: Page;
+  currentProduct: Locator;
+  product: Product;
+}) => {
+  await currentProduct.locator('button').click();
+
+  await page.isVisible('button.number__spinner__spinner__add-btn');
+  await currentProduct
+    .locator('button.number__spinner__spinner__add-btn')
+    .click({ clickCount: product.quantity });
+
+  await page.isVisible('.ant-message-custom-content');
 };
 
 export const signIn = async ({ page }: SignInParams) => {
