@@ -1,6 +1,11 @@
 import { Injectable } from '@nestjs/common';
 
-import { createPage, searchProduct, signIn } from './scrapper.utils';
+import {
+  createPage,
+  doCheckout,
+  searchProduct,
+  signIn,
+} from './scrapper.utils';
 
 @Injectable()
 export class ScrapperService {
@@ -39,7 +44,7 @@ export class ScrapperService {
       await searchProduct({ product, page, addIt: true });
     }
 
-    // go to buy page
+    await doCheckout({ page });
 
     setTimeout(async () => {
       await browser.close();

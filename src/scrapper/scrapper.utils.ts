@@ -1,7 +1,7 @@
 import { Logger } from '@nestjs/common';
 import { Page, chromium, LaunchOptions, Locator } from 'playwright';
 
-interface SignInParams {
+interface Scrapable {
   page: Page;
 }
 
@@ -15,17 +15,16 @@ interface Product {
   quantity: number;
 }
 
-interface SearchProductParams {
+interface SearchProductParams extends Scrapable {
   product: Product;
-  page: Page;
   addIt?: boolean;
 }
 
 export const createPage = async ({ options = {}, url }: CreatePageParams) => {
   try {
     const browser = await chromium.launch({
-      headless: false,
-      slowMo: 2000,
+      headless: true,
+      // slowMo: 2000,
       ...options,
     });
     const page = await browser.newPage();
@@ -125,10 +124,10 @@ const addProductToCart = async ({
     .locator('button.number__spinner__spinner__add-btn')
     .click({ clickCount: product.quantity });
 
-  await page.isVisible('.ant-message-custom-content');
+  await page.waitForSelector('.ant-message-custom-content');
 };
 
-export const signIn = async ({ page }: SignInParams) => {
+export const signIn = async ({ page }: Scrapable) => {
   try {
     await page.locator('.user__account').click();
     await page
@@ -149,5 +148,43 @@ export const signIn = async ({ page }: SignInParams) => {
     await page.waitForSelector('text="Inicio sesion exitosa"');
   } catch (error) {
     Logger.error('error siging in ', { message: error.message });
+  }
+};
+
+export const doCheckout = async ({ page }: Scrapable) => {
+  await page.locator('[aria-label="View Cart"]').click();
+
+  await page.locator('#checkoutBtn').click();
+
+  await page.waitForSelector('.slick-slide');
+
+  for await (const element of iterateLocator(page.locator('.slick-slide'))) {
+    await element.click();
+
+    try {
+      await page.waitForSelector('.meridian-slots', { timeout: 5000 });
+      await page.locator('.meridian-slots >> nth=0').click();
+      break;
+    } catch (errors) {
+      Logger.warn('no schedule found ', errors);
+    }
+  }
+
+  try {
+    // TODO: this xpath sucks, find a better way
+    // credit card method for payment
+    await page
+      .locator(
+        '//html/body/div[1]/div/div[2]/div/div/div/div[2]/div/div[2]/div[2]/div/div[1]/label/div[2]',
+      )
+      .click();
+  } catch (errors) {
+    Logger.warn('no payment found ', errors);
+  }
+
+  try {
+    // await page.locator('#confirmCheckout').click();
+  } catch (errors) {
+    Logger.warn('order failed at the end ', errors);
   }
 };
