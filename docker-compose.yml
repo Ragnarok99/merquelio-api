@@ -1,40 +1,40 @@
 version: '3.9'
 services:
-  # nestjs:
-  #   build:
-  #     context: .
-  #     target: development
-  #     dockerfile: Dockerfile
-  #   container_name: merquelio-api
-  #   environment:
-  #     - USERNAME=${USERNAME}
-  #     - USER_PASSWORD=${USER_PASSWORD}
-  #     - NODE_ENV=${NODE_ENV}
-  #     - PORT=${NESTJS_PORT}
-  #     - DATABASE_HOST=${DATABASE_HOST}
-  #     - DATABASE_PORT=${DATABASE_PORT}
-  #     - DATABASE_USER=${DATABASE_USER}
-  #     - DATABASE_PASSWORD=${DATABASE_PASSWORD}
-  #     - DATABASE_URL=${DATABASE_URL}
-  #     - DATABASE_NAME=${DATABASE_NAME}
-  #   ports:
-  #     - '${NESTJS_PORT}:${NESTJS_PORT}'
-  #   depends_on:
-  #     - db
-  #   links:
-  #     - db:db
-  #   volumes:
-  #     - .:/app
-  #     - /app/node_modules
-  #   command: yarn start:dev
+  nestjs:
+    build:
+      context: .
+      target: development
+      dockerfile: Dockerfile
+    container_name: merquelio-api
+    environment:
+      - USERNAME=${USERNAME}
+      - USER_PASSWORD=${USER_PASSWORD}
+      - NODE_ENV=${NODE_ENV}
+      - PORT=${NESTJS_PORT}
+      - DATABASE_HOST=${DATABASE_HOST}
+      - DATABASE_PORT=${DATABASE_PORT}
+      - DATABASE_USER=${DATABASE_USER}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
+      - DATABASE_URL=${DATABASE_URL}
+      - DATABASE_NAME=${DATABASE_NAME}
+    ports:
+      - '${NESTJS_PORT}:${NESTJS_PORT}'
+    depends_on:
+      - db
+    links:
+      - db:db
+    volumes:
+      - .:/app
+      - /app/node_modules
+    command: yarn start:dev
 
   db:
     image: postgres
     container_name: merquelio-api-db
     restart: always
     environment:
-      POSTGRES_USER: '${DATABASE_USER:-postgres}'
-      POSTGRES_PASSWORD: '${DATABASE_PASSWORD:-postgres}'
+      POSTGRES_USER: '${DATABASE_USER}'
+      POSTGRES_PASSWORD: '${DATABASE_PASSWORD}'
     logging:
       options:
         max-size: '${DATABASE_LOGGING_MAX_SIZE}'

@@ -21,10 +21,11 @@ interface SearchProductParams extends Scrapable {
 }
 
 export const createPage = async ({ options = {}, url }: CreatePageParams) => {
+  console.log({ env: process.env.CHROME_BIN });
   try {
     const browser = await chromium.launch({
       headless: true,
-      // slowMo: 2000,
+      executablePath: process.env.CHROME_BIN,
       ...options,
     });
     const page = await browser.newPage();
