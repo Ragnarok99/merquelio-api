@@ -40,7 +40,7 @@ services:
         max-size: '${DATABASE_LOGGING_MAX_SIZE}'
         max-file: '${DATABASE_LOGGING_MAX_FILES}'
     ports:
-      - '${DATABASE_PORT}:${DATABASE_PORT}'
+      - '5439:${DATABASE_PORT}'
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./sql/01-create-database.sql:/docker-entrypoint-initdb.d/01-create-database.sql

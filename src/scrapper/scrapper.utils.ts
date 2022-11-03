@@ -21,7 +21,6 @@ interface SearchProductParams extends Scrapable {
 }
 
 export const createPage = async ({ options = {}, url }: CreatePageParams) => {
-  console.log({ env: process.env.CHROME_BIN });
   try {
     const browser = await chromium.launch({
       headless: true,
@@ -33,7 +32,7 @@ export const createPage = async ({ options = {}, url }: CreatePageParams) => {
 
     return { browser, page };
   } catch (error) {
-    Logger.error('error opennig page', { message: error.message });
+    Logger.error('error opening page', { message: error.message });
   }
 };
 
@@ -57,18 +56,19 @@ export const searchProduct = async ({
     let highest = Infinity;
     let lowestPriceElement: Locator = null;
 
-    // account for empty repsonse
+    // TODO: account for empty response
 
     await page.waitForSelector('.card-product-vertical');
 
     for await (const element of iterateLocator(
       page.locator('.card-product-vertical'),
     )) {
-      const elementPrice = await element
-        .locator('.prod--default__price__current')
-        .textContent();
+      const elementPrice = await element.locator('.base__price').textContent();
 
-      const price = Number(elementPrice.split(' ')[1]);
+      const price = Number(
+        elementPrice.replace('$', '').replace(',', '.').trim(),
+      );
+
       if (price < highest) {
         highest = price;
         lowestPriceElement = element;
@@ -80,10 +80,10 @@ export const searchProduct = async ({
         .locator('.prod__name')
         .textContent();
       const image = await lowestPriceElement
-        .locator('.prod__image__img')
+        .locator('.prod__figure__img')
         .getAttribute('src');
       const price = await lowestPriceElement
-        .locator('.prod--default__price__current')
+        .locator('.base__price')
         .textContent();
 
       if (addIt) {
@@ -120,12 +120,9 @@ const addProductToCart = async ({
 }) => {
   await currentProduct.locator('button').click();
 
-  await page.isVisible('button.number__spinner__spinner__add-btn');
-  await currentProduct
-    .locator('button.number__spinner__spinner__add-btn')
-    .click({ clickCount: product.quantity });
+  await currentProduct.locator('input').fill(String(product.quantity));
 
-  await page.waitForSelector('.ant-message-custom-content');
+  await page.waitForSelector('.loader.type-primary');
 };
 
 export const signIn = async ({ page }: Scrapable) => {
